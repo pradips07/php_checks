@@ -1,0 +1,74 @@
+name: PR Quality Gates
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  php-checks:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: composer
+
+      - name: Cache Composer
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.composer/cache
+            vendor
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Install Composer deps
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: PHPCS (Check PHP code style)
+        id: phpcs
+        run: vendor/bin/phpcs -q --ignore=Generic.Files.LineLength src/ || true
+
+      - name: PHPCBF (Auto-fix fixable errors)
+        id: phpcbf
+        run: vendor/bin/phpcbf src/ || true
+
+      - name: PHPStan
+        id: phpstan
+        run: vendor/bin/phpstan analyse src/ --no-progress || true
+
+      - name: Rector dry-run
+        id: rector
+        run: vendor/bin/rector process --dry-run || true
+        
+      - name: Composer audit
+        id: composer_audit
+        run: |
+          composer config --global audit.abandoned fail
+          composer audit --format=plain || true
+          
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install openai PyGithub
+
+      - name: Run AI PR Review
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: python .github/scripts/php-code-suggestor.py
