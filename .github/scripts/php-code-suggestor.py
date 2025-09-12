@@ -53,9 +53,9 @@ Do not change any files. Only provide review comments and suggestions in markdow
 """
 
 # 👇 Echo the prompt for debugging
-    print("----- PROMPT START -----")
-    print(prompt)
-    print("----- PROMPT END -----")
+print("----- PROMPT START -----")
+print(prompt)
+print("----- PROMPT END -----")
 
 try:
     response = openai.chat.completions.create(
