@@ -52,6 +52,11 @@ Provide a concise review of the PR, highlighting:
 Do not change any files. Only provide review comments and suggestions in markdown format.
 """
 
+# 👇 Echo the prompt for debugging
+    print("----- PROMPT START -----")
+    print(prompt)
+    print("----- PROMPT END -----")
+
 try:
     response = openai.chat.completions.create(
         model="gpt-4o-mini",
