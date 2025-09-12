@@ -49,7 +49,6 @@ Provide a concise review of the PR, highlighting:
 - Static analysis warnings
 - Rector suggestions
 - Security or dependency concerns from Composer audit
-- The suggested changes must be done, or it's a normal suggestion, we can make it later?
 Do not change any files. Only provide review comments and suggestions in markdown format.
 """
 
